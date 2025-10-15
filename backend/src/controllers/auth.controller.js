@@ -1,3 +1,4 @@
+import { sendWelcomeEmail } from "../emails/emailHandler.js";
 import { generateToken } from "../libs/utils.js";
 import User from "../models/user.modal.js";
 import bcrypt from "bcryptjs";
@@ -8,12 +9,15 @@ export const signUpUser = async (req, res, next) => {
 	try {
 		const { email, password, username } = req.body;
 		if (!email || !password || !username) {
-			return res.status(400).json({ message: "All fields are required" }); 
+			return res.status(400).json({ message: "All fields are required" });
+		}
+		if (username.length < 3 || username.trim().length === 0) {
+			return res.status(400).json({ message: "Username must be at least 3 characters long" });
 		}
 		if (password.length < 6) {
 			return res.status(400).json({ message: "Password must be at least 6 characters long" });
 		}
-
+		
 		// check if emails valid; regex
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) {
@@ -32,19 +36,27 @@ export const signUpUser = async (req, res, next) => {
 		if (newUser) {
 			generateToken(newUser._id, res);
 			await newUser.save();
-			return res.status(201).json({
-				message: "User registered successfully", newUser
-			});
-			// TODO : send a welcome email here
+			newUser.password = undefined; // hide password in response
+			const welcomeEmail = await sendWelcomeEmail(email, username, process.env.CLIENT_URL);
 
-		} else {
+			return res.status(201).json({
+				message: "User registered successfully", newUser, welcomeEmail
+			});
+		}
+		else {
 			res.status(400).json({ message: "Invalid user data" });
+		}
+		try {
+			await sendWelcomeEmail(email, username, process.env.CLIENT_URL);
+		} catch (error) {
+			console.error("Error sending welcome email:", error);
 		}
 
 	} catch (error) {
 		console.log("Error in loginUser controller", error.message);
 		next(error);
 	}
+
 }
 
 export const logOutUser = (req, res, next) => {
