@@ -15,7 +15,7 @@ export const loginUser = async (req, res, next) => {
 		const isPasswordCorrect = await bcrypt.compare(password, user.password);
 		if (!isPasswordCorrect) return res.status(401).json({ message: "Invalid credentials" });
 		generateToken(user._id, res);
-		user.password = undefined ; 
+		user.password = undefined;
 		res.status(200).json({ success: true, user })
 	} catch (error) {
 		console.log("Error in loginUser controller", error.message);
@@ -77,11 +77,7 @@ export const signUpUser = async (req, res, next) => {
 
 }
 
-export const logOutUser = (req, res, next) => {
-	try {
-
-	} catch (error) {
-		console.log("Error in loginUser controller", error.message);
-		next(error);
-	}
+export const logOutUser = (_, res) => {
+	res.cookie("token", "", { maxAge: 0 })
+	res.status(200).json({ message: "Logged Out Successfully" })
 }
