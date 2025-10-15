@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes.js';
 import messageRoutes from './routes/messages.routes.js';
 import cors from 'cors';
 
+
 //middleware
 
 app.use(cors({
