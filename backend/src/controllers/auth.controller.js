@@ -3,6 +3,24 @@ import { generateToken } from "../libs/utils.js";
 import User from "../models/user.modal.js";
 import bcrypt from "bcryptjs";
 export const loginUser = async (req, res, next) => {
+	try {
+		const { email, password } = req.body;
+		if (!email || !password) {
+			return res.status(400).json({ message: "All fields are required" });
+		}
+		const user = await User.findOne({ email });
+		if (!user) {
+			return res.status(401).json({ message: "Invalid credentials" });
+		}
+		const isPasswordCorrect = await bcrypt.compare(password, user.password);
+		if (!isPasswordCorrect) return res.status(401).json({ message: "Invalid credentials" });
+		generateToken(user._id, res);
+		user.password = undefined ; 
+		res.status(200).json({ success: true, user })
+	} catch (error) {
+		console.log("Error in loginUser controller", error.message);
+		next(error);
+	}
 }
 
 export const signUpUser = async (req, res, next) => {
@@ -17,7 +35,7 @@ export const signUpUser = async (req, res, next) => {
 		if (password.length < 6) {
 			return res.status(400).json({ message: "Password must be at least 6 characters long" });
 		}
-		
+
 		// check if emails valid; regex
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		if (!emailRegex.test(email)) {
