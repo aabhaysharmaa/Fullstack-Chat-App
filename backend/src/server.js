@@ -41,20 +41,22 @@ app.use("/api/v1/messages", messageRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
 	console.error(err.stack);
-	res.status(err.status).send(err.message || 'Internal Server Error');
+	res.status(500).send(err.message || 'Internal Server Error');
 });
 
 
-const expressAsyncHandler = async () => {
-	try {
-		await connectDB();
-		console.log('Database connected successfully');
-		app.listen(PORT, () => {
-			console.log(`Server is running on port ${PORT}`);
-		});
-	} catch (error) {
-		console.error(error.message);
-	}
-}
+const startServer = async () => {
+  try {
+    await connectDB();
+    console.log('✅ Database connected successfully');
 
-expressAsyncHandler();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Error connecting to database:', error.message);
+    process.exit(1); // exit process if DB connection fails
+  }
+};
+
+startServer();
